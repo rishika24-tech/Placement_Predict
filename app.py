@@ -9,43 +9,52 @@ model = pickle.load(open('model.pkl', 'rb'))
 model1 = pickle.load(open('model1.pkl', 'rb'))
 
 @app.route('/')
-def h():
-    return render_template('h.html')
+def home():
+    return render_template('index.html')  # Changed from 'h.html'
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
 @app.route('/index')
-def home():
+def index():
     return render_template('index.html')
 
 @app.route('/predict', methods=['GET'])
 def predict():
-    cgpa = request.args.get('cgpa') or '0'
-    projects = request.args.get('projects') or '0'
-    workshops = request.args.get('workshops') or '0'
-    mini_projects = request.args.get('mini_projects') or '0'
-    skills = request.args.get('skills') or ''
-    communication_skills = request.args.get('communication_skills') or '0'
-    internship = request.args.get('internship') or '0'
-    hackathon = request.args.get('hackathon') or '0'
-    tw_percentage = request.args.get('tw_percentage') or '0'
-    te_percentage = request.args.get('te_percentage') or '0'
-    backlogs = request.args.get('backlogs') or '0'
-    name = request.args.get('name') or 'Student'
+    cgpa = float(request.args.get('cgpa', 0))  # Default to 0 if not provided
+    projects = int(request.args.get('projects', 0))  # Convert to integer
+    workshops = int(request.args.get('workshops', 0))
+    mini_projects = int(request.args.get('mini_projects', 0))
+    skills = request.args.get('skills', '')
+    communication_skills = float(request.args.get('communication_skills', 0))  # Default to 0
+    internship = int(request.args.get('internship', 0))
+    hackathon = int(request.args.get('hackathon', 0))
+    tw_percentage = float(request.args.get('tw_percentage', 0))
+    te_percentage = float(request.args.get('te_percentage', 0))
+    backlogs = int(request.args.get('backlogs', 0))
+    name = request.args.get('name', 'Student')
 
-    s = skills.count(',') + 1 if skills else 0
+    s = len(skills.split(',')) if skills else 0  # Handle skills count
 
     arr = np.array([cgpa, projects, workshops, mini_projects, s, communication_skills, internship, hackathon, tw_percentage, te_percentage, backlogs])
     brr = np.asarray(arr, dtype=float)
-    output = model.predict([brr])[0]
+
+    try:
+        output = model.predict([brr])[0]
+    except Exception as e:
+        return f"Error in prediction: {str(e)}"
 
     p = '1' if output == 'Placed' else '0'
 
     arr1 = np.array([cgpa, projects, workshops, mini_projects, s, communication_skills, internship, hackathon, tw_percentage, te_percentage, backlogs, p])
     brr1 = np.asarray(arr1, dtype=float)
-    salary = model1.predict([brr1])[0]
+
+    try:
+        salary = model1.predict([brr1])[0]
+    except Exception as e:
+        return f"Error in salary prediction: {str(e)}"
+
     k = f"{int(salary):,}"
 
     if output == 'Placed':
@@ -55,7 +64,7 @@ def predict():
         out = f'Sorry {name} !! You have low chances of getting placed. All the best!!!!'
         out2 = 'Improve your skills...'
 
-    return render_template('out.html', output=out, output2=out2)
+    return render_template('output.html', output=out, output2=out2)
 
 if __name__ == "__main__":
     app.run(debug=True)
