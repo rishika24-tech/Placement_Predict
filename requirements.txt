@@ -4,3 +4,4 @@ Pandas
 Numpy
 matplotlib
 Seaborn
+gunicorn
